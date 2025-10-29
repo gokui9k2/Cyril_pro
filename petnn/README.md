@@ -2,7 +2,7 @@
 
 This repository contains my implementation of the paper:
 
-**"Physics inspired Energy Transition Neural Network for Sequence Learning"**
+** Physics inspired Energy Transition Neural Network for Sequence Learning **
 
 * **Paper Link:** [https://arxiv.org/abs/2505.03281](https://arxiv.org/abs/2505.03281)
 
@@ -65,3 +65,4 @@ The paper uses a "hard" binary switch ($m=0$ or $m=1$), which is inspired by the
 * **Result:** I replaced the hard switch with a smooth function, and the performance was lower.
   
 This strongly suggests that the **physics-inspired**, discrete "release" mechanism is a critical and important part of this architecture's success.
+
