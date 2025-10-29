@@ -33,8 +33,8 @@ $$T_{t}=R_{t}\cdot\sigma(T_{t-1}+Z_{t})-1$$
 **2. Release Switch:** A hard binary switch $m$ determines if the energy is released.
 
 $$m = \begin{cases} 
-1 & \text{if } T_t \le 0 \text{ (Time to release)} \\ 
-0 & \text{if } T_t > 0 \text{ (Accumulate energy)} 
+1 & \text{if } T_t \le 0 \\ 
+0 & \text{if } T_t > 0 
 \end{cases}$$
 
 **3. Cell State Update:** If $m=1$, the cell's energy $C_t$ is reset to its ground state $I_t$. Otherwise, it continues to accumulate new energy $Z_c$.
@@ -69,5 +69,6 @@ The paper uses a "hard" binary switch ($m=0$ or $m=1$), which is inspired by the
 * **Result:** I replaced the hard switch with a smooth function, and the performance was lower.
   
 This strongly suggests that the **physics-inspired**, discrete "release" mechanism is a critical and important part of this architecture's success.
+
 
 
