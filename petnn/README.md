@@ -48,11 +48,11 @@ During my implementation, I focused on a few key areas and experiments:
 
 I paid particular attention to the bias terms in these equations. I discovered a critical sensitivity:
 
-* **Problem:** If the biases are initialized too close to zero, the model can get "stuck" in a state of constantly releasing energy (i.e., $m$ is always 1) or **constant accumulation** ($m$ is always 0).
+* **Problem:** If the biases are initialized too close to zero, the model can get "stuck" in a state of constantly releasing energy ($m$ is always 1) or **constant accumulation** ($m$ is always 0).
 * **Effect:** This prevents the model from learning properly, making it act more like a classic LSTM or just an RNN that **accumulates** all the information, and it never gets out of this state.
 * **Solution:** I found a specific combination of bias initializations that allows the model to start in a stable state (not in "release mode" nor "accumulation mode") but is not so high that it *never* enters the energy release state.
 
-### 2. Experiment: Custom Physics-Based Loss Function
+### 2. Experiment: Custom Physics Based Loss Function
 
 I also experimented with a custom loss function based on the physics assumption.
 
@@ -63,12 +63,13 @@ While it didn't improve my metrics, I still believe this could be a promising di
 
 ### 3. Experiment: Hard vs Smooth Switching
 
-The paper uses a "hard" binary switch ($m=0$ or $m=1$), which is inspired by the discrete nature of a quantum jump.
+The paper uses a hard binary switch ($m=0$ or $m=1$), which is inspired by the discrete nature of a quantum jump.
 
 * **Hypothesis:** Would a 'smooth' switch perform better? The smooth switch allows all the parameters of the model to receive gradients through the training.
 * **Result:** I replaced the hard switch with a smooth function, and the performance was lower.
   
 This strongly suggests that the **physics-inspired**, discrete "release" mechanism is a critical and important part of this architecture's success.
+
 
 
 
