@@ -70,9 +70,13 @@ The paper uses a hard binary switch ($m=0$ or $m=1$), which is inspired by the d
   
 This strongly suggests that the **physics-inspired**, discrete "release" mechanism is a critical and important part of this architecture's success.
 
+The classic PETNN achieved a score of $0.20$ MAE on the Eth2 dataset, but its computational cost is high, requiring approximately 3 minutes per training epoch.
 
+### 4. PETNN with PATCH_tst Inspired Encoder
 
+In this architecture, inspiration was taken from PATCH_TST. Before sending information to the PETNN encoder, the input was compressed using a 1D Convolutional (Conv1D) layer. This encoder was trained on a self supervised task for subsequent transfer learning. The decoder was implemented as a simple Linear Head.
 
+This modified model achieved a 0.175 MAE, and one epoch runs in 30 seconds, significantly reducing the training time and improving the overall score.
 
 
 
