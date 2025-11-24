@@ -31,5 +31,6 @@ An exploratory analysis project focusing on 3D machine learning on volumetric da
 
 Interested in collaborating or learning more about my work?
 
-* **LinkedIn:** http://linkedin.com/in/cyril-petris-b96a9629b
+* **LinkedIn:** http://www.linkedin.com/in/cyril-petris-data-ai
 * **Email:** petris.cyril9@gmail.com
+

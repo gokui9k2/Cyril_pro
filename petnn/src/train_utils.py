@@ -5,11 +5,10 @@ from sklearn.preprocessing import RobustScaler
 import random
 import matplotlib.pyplot as plt
 
-"""
-FOnction for the traning and evalutation of the classic implmenttion of PETNN model 
-"""
 def one_epoch(model, train_loader, val_loader, optimizer, criterion, device):
-
+    """
+    Standard training and validation loop for a single epoch handles forward pass, backprop, gradient clipping, and validation
+    """
     model.train()
     train_loss = 0
     total_releases = 0
@@ -45,13 +44,10 @@ def one_epoch(model, train_loader, val_loader, optimizer, criterion, device):
 
     return avg_train_loss, avg_val_loss, avg_releases
 
-
-"""
-Preprocessing function for the time series data.
-"""
-
 def one_epoch_masked_encoder(model_encoder, model_head, train_loader, val_loader, optimizer, device, patch_size, criterion=None):
-
+    """
+    Training loop specifically for Masked Autoencoder MAE strategies trains both the Encoder and the Projection Head simultaneously
+    """
     model_encoder.train()
     model_head.train()
     train_loss = 0.0
@@ -115,7 +111,9 @@ def one_epoch_masked_encoder(model_encoder, model_head, train_loader, val_loader
     return avg_train_loss, avg_val_loss, avg_releases
 
 def masked_mae_loss(pred, target, mask, patch_size, device):
-
+    """
+    Calculates Mean Absolute Error only on the MASKED patches used for self supervised learning where the model reconstructs hidden parts
+    """
     mask_ts = mask.repeat_interleave(patch_size, dim=1)
     mask_ts = mask_ts.unsqueeze(-1)
 
@@ -131,7 +129,9 @@ def masked_mae_loss(pred, target, mask, patch_size, device):
 
 
 def evaluate_encoder_decoder(encoder, decoder, data_loader, target_scaler, device, criterion=None):
-
+    """
+    Evaluates a full Encoder-Decoder architecture performs Inverse Scaling to report metrics in the original data scale
+    """
     encoder.eval()
     decoder.eval()
     
@@ -197,6 +197,9 @@ def evaluate_encoder_decoder(encoder, decoder, data_loader, target_scaler, devic
     return result
 
 def evaluate_model(model, data_loader, target_scaler, device):
+    """
+    Simplified evaluation for a standard single model
+    """
     model.eval()
     all_predictions = []
     all_targets = []
@@ -229,32 +232,36 @@ def evaluate_model(model, data_loader, target_scaler, device):
     return {'predictions': predictions_original,'targets': targets_original}
 
 def plot_residuals_distribution(result):
+    """
+    Plots the distribution of residuals between predictions and targets
+    """
+    n = len(result["predictions"])
+    residuals = []
+    for i in range(n):
+        residual = result["targets"][i] - result["predictions"][i]
+        residuals.append(residual)
 
-  n = len(result["predictions"])
-  residuals = []
-  for i in range(n):
-      residual = result["targets"][i] - result["predictions"][i]
-      residuals.append(residual)
+    residuals_original = np.array(residuals)
 
-  residuals_original = np.array(residuals)
+    residuals_rounded = np.round(residuals_original).astype(int)
 
-  residuals_rounded = np.round(residuals_original).astype(int)
+    plt.figure(figsize=(14, 6))
+    plt.hist(residuals_rounded.flatten(), bins=50, edgecolor='black', alpha=0.7)
 
-  plt.figure(figsize=(14, 6))
-  plt.hist(residuals_rounded.flatten(), bins=50, edgecolor='black', alpha=0.7)
+    plt.title("Distribution of Residuals")
+    plt.xlabel("Residual")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
 
-  plt.title("Distribution of Residuals")
-  plt.xlabel("Residual")
-  plt.ylabel("Frequency")
-  plt.legend()
-  plt.grid(True, alpha=0.3)
-  plt.tight_layout()
-  plt.show()
-
-  return residuals_original
+    return residuals_original
 
 def transfer_weights(path_to_checkpoint, new_model, device):
-
+    """
+    Transfers weights from a pre trained checkpoint to a new model
+    """
     checkpoint = torch.load(path_to_checkpoint, map_location=device)
     old_state_dict = checkpoint['encoder_state_dict']
     new_state_dict = new_model.state_dict()
@@ -275,7 +282,9 @@ def transfer_weights(path_to_checkpoint, new_model, device):
     return new_model
 
 def one_epoch_final(model_encoder, model_head, train_loader, val_loader, optimizer, criterion, device):
-
+    """
+    Fine tuning / Linear Probing loop the Encoder is FROZEN only the Head is trained transfer learning setup
+    """
     model_encoder.eval()
     model_head.train()
 

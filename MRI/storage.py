@@ -19,6 +19,7 @@ logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(l
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
 try:
+    # Initialize the Blob Service Client
     blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONNECTION_STRING)
     print("Connection to Azure Blob Storage successful.")
     print(f"Checking if container '{AZURE_CONTAINER_NAME}' exists...")
@@ -34,12 +35,20 @@ except Exception as e:
 os.makedirs(output_dir, exist_ok=True)
 
 def process_series(series_uid):
+    """
+    Worker function to handle a single Series UID:
+    1. Downloads DICOM files from TCIA to a local temp folder.
+    2. Uploads files to Azure Blob Storage.
+    3. Deletes local files to free up disk space.
+    """
+
     series_temp_dir = os.path.join(output_dir, series_uid)
     try:
+        # Step A: Download from TCIA
         os.makedirs(series_temp_dir, exist_ok=True)
         formatted_series = [{'SeriesInstanceUID': series_uid}]
         nbia.downloadSeries(series_data=formatted_series, path=series_temp_dir)
-
+        # Step B: Upload to Azure
         for root, dirs, files in os.walk(series_temp_dir):
             for file_name in files:
                 local_file_path = os.path.join(root, file_name)
@@ -53,7 +62,7 @@ def process_series(series_uid):
 
     except Exception as e:
         return f"Error on series {series_uid}: {e}"
-
+    # Step C: Cleanup
     finally:
         if os.path.exists(series_temp_dir):
             shutil.rmtree(series_temp_dir)

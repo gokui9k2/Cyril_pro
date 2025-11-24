@@ -1,0 +1,14 @@
+undetected-chromedriver
+selenium
+numpy
+matplotlib
+seaborn
+scikit-learn
+opencv-python
+scikit-image
+tensorflow
+torch
+torchvision
+transformers
+optuna
+optuna-integration[tfkeras]

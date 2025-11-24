@@ -1,4 +1,14 @@
+from google import genai
+from google.genai import types
+from google.genai.types import SafetySetting, HarmCategory, HarmBlockThreshold
+import time 
+import pandas as pd
+from tqdm import tqdm
+
 def extract_function_calls(response):
+    """
+    Parses the raw response object from the Gemini API to extract structured function call data
+    """
     function_calls = []
     if response.candidates and response.candidates[0].content.parts:
         for part in response.candidates[0].content.parts:
@@ -10,7 +20,14 @@ def extract_function_calls(response):
     return function_calls
 
 def get_mri_classification_tool() -> types.FunctionDeclaration:
+
+    """
+    Defines the  Tool  that the AI model must use this strictly defines the JSON Schema the model will generate forcing
+    structured output instead of free text
+    """
+
     return types.FunctionDeclaration(
+
         name="submit_mri_classifications",
         description="Submits the DCE classifications for all studies across all patients. Each study gets its own classification object.",
         parameters=types.Schema(
@@ -42,10 +59,14 @@ def get_mri_classification_tool() -> types.FunctionDeclaration:
                     required=["patient_index", "studies"]))},
                         required=["patients"]))
 
-def call_gemini_with_genai_sdk(prompt,system_prompt,api_key=None,model="gemini-2.5-pro",
-    use_tools=True,
-    enable_mri_classifier=False,
+def call_gemini_with_genai_sdk(prompt,system_prompt,api_key=None,model="gemini-2.5-pro",use_tools=True,enable_mri_classifier=False,
     temperature: float = 0.0):
+
+    """
+    Wrapper function to call Google Gemini API using the GenAI SDK.
+    Handles authentication, tool configuration (function calling), and safety settings.
+    """
+
     api_key = api_key or API_GEMINI
     if not api_key:
         raise ValueError("API key not provided")
@@ -63,8 +84,9 @@ def call_gemini_with_genai_sdk(prompt,system_prompt,api_key=None,model="gemini-2
             config_params["tools"] = [tools]
             config_params["tool_config"] = types.ToolConfig(function_calling_config=types.FunctionCallingConfig(mode="ANY"))
     
-    from google.genai.types import SafetySetting, HarmCategory, HarmBlockThreshold
-    
+    # Disable safety filters 
+    # Essential for medical/clinical text which might otherwise trigger
+
     safety_settings = [
         SafetySetting(category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,threshold=HarmBlockThreshold.BLOCK_NONE),
         SafetySetting(category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,hreshold=HarmBlockThreshold.BLOCK_NONE),
@@ -128,20 +150,26 @@ def prepare_study_data(df, study_id):
     return result
 
 def prepare_patient_data(df, patient_id):
+
+    """
+    Aggregates all MRI studies and their contained series for a specific patient
+    """
+
     patient_studies = df[df['patient_id'] == patient_id]['study_instance_uid'].unique()
     
     studies_data = []
     for study_id in patient_studies:
         study_data = prepare_study_data(df, study_id)
-        studies_data.append({
-            'study_instance_uid': study_id,
-            'series_data': study_data
-        })
+        studies_data.append({'study_instance_uid': study_id,
+            'series_data': study_data})
     
     return studies_data
 
 def format_batch_prompt(patients_data_list):
-    
+    """
+    Constructs a single formatted text block containing metadata for multiple patients this string serves as the context/input for the LLM
+    """
+
     prompt = """Analyze these patient MRI studies and identify all DCE series."""
     
     for patient_idx, patient_data in enumerate(patients_data_list, 1):
@@ -169,7 +197,16 @@ def format_batch_prompt(patients_data_list):
     return prompt
 
 def process_dataset_in_batches(df, batch_size=5, api_key=None, max_retries=3, retry_delay=5, system_prompt=""):
-
+    """
+    Orchestrates the batch processing of the dataset via the Gemini API
+    
+    Workflow:
+    1. Splits patients into batches
+    2. Formats metadata into a text prompt
+    3. Calls Gemini to identify DCE series
+    4. Maps the AI's output  back to specific Series UIDs
+    5. Aggregates results into a filtered DataFrame
+    """
     unique_patients = df['patient_id'].unique()
     all_dce_series = []
     
