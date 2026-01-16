@@ -1,7 +1,0 @@
-tcia-utils
-azure-storage-blob
-tqdm
-numpy
-matplotlib
-pydicom
-scipy

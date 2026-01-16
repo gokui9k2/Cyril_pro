@@ -1,0 +1,73 @@
+main:
+  steps:
+    - init:
+        assign:
+          - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - location: "europe-west9"
+          - job_ingest: "job-ingestion"
+          - job_preprocess: "job-preprocessing"
+          - job_process: "benchmark-mri-final"  
+
+    # INGESTION
+    - start_ingestion:
+        call: googleapis.run.v1.namespaces.jobs.run
+        args:
+          name: ${"namespaces/" + project_id + "/jobs/" + job_ingest}
+          location: ${location}
+        result: ingest_exec_op
+
+    - wait_for_ingestion:
+        call: sys.sleep
+        args:
+          seconds: 10 
+    - check_ingestion:
+        call: googleapis.run.v1.namespaces.executions.get
+        args:
+          name: ${ingest_exec_op.metadata.name}
+          location: ${location}
+        result: ingest_status
+    - verify_ingestion_status:
+        switch:
+          - condition: ${ingest_status.status.conditions[0].type == "Completed" and ingest_status.status.conditions[0].status == "True"}
+            next: start_preprocessing 
+          - condition: ${ingest_status.status.conditions[0].type == "Completed" and ingest_status.status.conditions[0].status == "False"}
+            raise: "Ingestion Failed!" 
+        next: wait_for_ingestion 
+
+    # PREPROCESSING 
+
+    - start_preprocessing:
+        call: googleapis.run.v1.namespaces.jobs.run
+        args:
+          name: ${"namespaces/" + project_id + "/jobs/" + job_preprocess}
+          location: ${location}
+        result: preprocess_exec_op
+
+    - wait_for_preprocessing:
+        call: sys.sleep
+        args:
+          seconds: 10
+    - check_preprocessing:
+        call: googleapis.run.v1.namespaces.executions.get
+        args:
+          name: ${preprocess_exec_op.metadata.name}
+          location: ${location}
+        result: preprocess_status
+    - verify_preprocessing_status:
+        switch:
+          - condition: ${preprocess_status.status.conditions[0].type == "Completed" and preprocess_status.status.conditions[0].status == "True"}
+            next: start_processing
+          - condition: ${preprocess_status.status.conditions[0].type == "Completed" and preprocess_status.status.conditions[0].status == "False"}
+            raise: "Preprocessing Failed!"
+        next: wait_for_preprocessing
+
+    # PROCESSING 
+    - start_processing:
+        call: googleapis.run.v1.namespaces.jobs.run
+        args:
+          name: ${"namespaces/" + project_id + "/jobs/" + job_process}
+          location: ${location}
+        result: process_exec
+
+    - done:
+        return: "Pipeline (Ingest -> Preprocess -> Process) launched successfully"

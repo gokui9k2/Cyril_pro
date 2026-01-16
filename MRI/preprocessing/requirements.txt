@@ -1,0 +1,7 @@
+google-cloud-storage
+pandas
+numpy
+pydicom
+pyarrow
+gcsfs
+fsspec
